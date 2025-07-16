@@ -7,9 +7,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        target: "https://dms-backend-fzye.onrender.com",
+        target: process.env.VITE_API_URL || "http://localhost:5000",
         changeOrigin: true,
+        secure: false,
       },
     },
+  },
+  define: {
+    // Make environment variables available at build time
+    __API_URL__: JSON.stringify(process.env.VITE_API_URL || "http://localhost:5000"),
   },
 })

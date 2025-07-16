@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import axios from "axios"
+import apiClient from "../config/api"
 import toast from "react-hot-toast"
 
 const Upload = () => {
@@ -74,17 +74,24 @@ const Upload = () => {
 
     try {
       setLoading(true)
-      const response = await axios.post("/api/documents/upload", formDataToSend, {
+      const response = await apiClient.post("/api/documents/upload", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
+        timeout: 60000, // 60 seconds for file upload
       })
 
       toast.success(response.data.message)
       navigate("/documents")
     } catch (error) {
-      const message = error.response?.data?.message || "Upload failed"
+      console.error("Upload error:", error)
+      const message = error.response?.data?.message || error.message || "Upload failed"
       toast.error(message)
+
+      // Show additional details if available
+      if (error.response?.data?.details) {
+        toast.error(error.response.data.details)
+      }
     } finally {
       setLoading(false)
     }
@@ -117,7 +124,7 @@ const Upload = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">📤 Upload Document</h1>
-        <p className="text-gray-600">Upload your files with version control and access management</p>
+        <p className="text-gray-600">Upload your files with version control and access management to Dropbox</p>
       </div>
 
       <div className="card" style={{ maxWidth: "700px", margin: "0 auto" }}>
@@ -163,6 +170,8 @@ const Upload = () => {
                   <div className="font-semibold mb-2">Drop your file here or click to browse</div>
                   <div className="text-gray-500 text-sm">
                     Supports: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, XLS, PPT (Max 10MB)
+                    <br />
+                    <span className="badge badge-info mt-2">📦 Files stored securely in Dropbox</span>
                   </div>
                 </div>
               )}
@@ -258,7 +267,7 @@ const Upload = () => {
           {/* Version Info */}
           <div className="alert alert-info">
             <strong>📋 Version Control:</strong> If you upload a file with the same name again, it will automatically
-            create a new version (v2, v3, etc.)
+            create a new version (v2, v3, etc.) and store it in Dropbox
           </div>
 
           {/* Submit Button */}
@@ -267,10 +276,10 @@ const Upload = () => {
               {loading ? (
                 <>
                   <div className="spinner" style={{ width: "1rem", height: "1rem" }}></div>
-                  Uploading...
+                  Uploading to Dropbox...
                 </>
               ) : (
-                <>📤 Upload Document</>
+                <>📤 Upload to Dropbox</>
               )}
             </button>
           </div>

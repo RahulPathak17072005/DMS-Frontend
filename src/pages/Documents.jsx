@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import PinModal from "../components/PinModal"
-import axios from "axios"
+import apiClient from "../config/api"
 import toast from "react-hot-toast"
 
 const Documents = () => {
@@ -44,7 +44,7 @@ const Documents = () => {
       params.append("limit", "12")
       params.append("showAllVersions", filters.showAllVersions)
 
-      const response = await axios.get(`/api/documents?${params}`)
+      const response = await apiClient.get(`/api/documents?${params}`)
       setDocuments(response.data.documents)
       setPagination({
         totalPages: response.data.totalPages,
@@ -80,7 +80,7 @@ const Documents = () => {
     }
 
     try {
-      await axios.delete(`/api/documents/${documentId}`)
+      await apiClient.delete(`/api/documents/${documentId}`)
       toast.success("Document deleted successfully")
       fetchDocuments()
     } catch (error) {
@@ -112,8 +112,9 @@ const Documents = () => {
         url += `?pin=${encodeURIComponent(pin)}`
       }
 
-      const response = await axios.get(url, {
+      const response = await apiClient.get(url, {
         responseType: "blob",
+        timeout: 60000, // 60 seconds for download
       })
 
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
@@ -153,7 +154,7 @@ const Documents = () => {
 
   const handleViewVersions = async (doc) => {
     try {
-      const response = await axios.get(`/api/documents/${doc._id}/versions`)
+      const response = await apiClient.get(`/api/documents/${doc._id}/versions`)
       console.log("Versions:", response.data.versions)
       toast.success(`Found ${response.data.versions.length} versions`)
     } catch (error) {
@@ -200,7 +201,7 @@ const Documents = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">📄 Documents</h1>
-        <p className="text-gray-600">Browse and manage your documents with version control</p>
+        <p className="text-gray-600">Browse and manage your documents with version control stored in Dropbox</p>
       </div>
 
       {/* Filters */}
@@ -252,6 +253,7 @@ const Documents = () => {
           </p>
           <div className="flex gap-2">
             <span className="badge badge-info">{filters.showAllVersions ? "All Versions" : "Latest Only"}</span>
+            <span className="badge badge-primary">📦 Dropbox Storage</span>
           </div>
         </div>
       </div>
@@ -267,7 +269,7 @@ const Documents = () => {
           <h3 className="font-semibold mb-2">📭 No documents found</h3>
           <p className="text-gray-600 mb-4">Try adjusting your search criteria or upload some documents.</p>
           <a href="/upload" className="btn btn-primary">
-            📤 Upload Document
+            📤 Upload Document to Dropbox
           </a>
         </div>
       ) : (
@@ -292,6 +294,8 @@ const Documents = () => {
                           <span className="version-badge">v{doc.version}</span>
                         </>
                       )}
+                      <br />
+                      <span className="badge badge-info">📦 Dropbox</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">

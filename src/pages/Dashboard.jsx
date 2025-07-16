@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "../contexts/AuthContext"
 import PinModal from "../components/PinModal"
-import axios from "axios"
+import apiClient from "../config/api"
 import toast from "react-hot-toast"
 
 const Dashboard = () => {
@@ -34,7 +34,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       // Fetch all documents with higher limit to categorize them
-      const response = await axios.get("/api/documents?limit=50")
+      const response = await apiClient.get("/api/documents?limit=50")
       const allDocuments = response.data.documents
 
       // Separate documents by access level
@@ -79,8 +79,9 @@ const Dashboard = () => {
         url += `?pin=${encodeURIComponent(pin)}`
       }
 
-      const response = await axios.get(url, {
+      const response = await apiClient.get(url, {
         responseType: "blob",
+        timeout: 60000, // 60 seconds for download
       })
 
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
@@ -120,7 +121,7 @@ const Dashboard = () => {
     if (pinModal.action === "download" && selectedDocument) {
       try {
         // First verify the PIN
-        await axios.post(`/api/documents/verify-pin/${selectedDocument._id}`, { pin })
+        await apiClient.post(`/api/documents/verify-pin/${selectedDocument._id}`, { pin })
 
         // If verification successful, proceed with download
         await handleDownload(selectedDocument, pin)
