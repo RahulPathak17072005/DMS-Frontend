@@ -92,12 +92,14 @@ const Dashboard = () => {
       link.remove()
       window.URL.revokeObjectURL(downloadUrl)
 
-      toast.success("Download started successfully")
+      toast.success("Download started successfully from Dropbox")
       setPinModal({ isOpen: false, documentId: null, documentName: "", action: null })
+      setSelectedDocument(null)
 
       // Refresh data to update download count
       fetchDashboardData()
     } catch (error) {
+      console.error("Download error:", error)
       if (error.response?.status === 401 && error.response?.data?.requiresPin) {
         setPinModal({
           isOpen: true,
@@ -116,7 +118,17 @@ const Dashboard = () => {
 
   const handlePinVerify = async (pin) => {
     if (pinModal.action === "download" && selectedDocument) {
-      await handleDownload(selectedDocument, pin)
+      try {
+        // First verify the PIN
+        await axios.post(`/api/documents/verify-pin/${selectedDocument._id}`, { pin })
+
+        // If verification successful, proceed with download
+        await handleDownload(selectedDocument, pin)
+      } catch (error) {
+        console.error("PIN verification failed:", error)
+        toast.error("Invalid PIN. Please try again.")
+        throw error // Re-throw to prevent modal from closing
+      }
     }
   }
 
@@ -167,13 +179,15 @@ const Dashboard = () => {
             <div className="document-meta">
               Uploaded by {doc.uploadedBy.username} • {formatFileSize(doc.size)}
               <br />
-              {new Date(doc.createdAt).toLocaleDateString()}
+              {new Date(doc.createdAt).toLocaleDateString()} • Downloaded {doc.downloadCount} times
               {doc.version > 1 && (
                 <>
                   <br />
                   <span className="version-badge">v{doc.version}</span>
                 </>
               )}
+              <br />
+              <span className="badge badge-info">📦 Stored in Dropbox</span>
             </div>
           </div>
           <div className="flex flex-col gap-1">
@@ -245,7 +259,7 @@ const Dashboard = () => {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">👋 Welcome back, {user?.username}!</h1>
-        <p className="text-gray-600">Access and manage documents based on their permission levels</p>
+        <p className="text-gray-600">Access and manage documents stored securely in Dropbox</p>
       </div>
 
       {/* Tab Navigation */}
@@ -275,6 +289,7 @@ const Dashboard = () => {
             <div className="card text-center">
               <div className="text-3xl font-bold text-primary-blue mb-2">{stats.totalDocuments}</div>
               <p className="text-gray-600">Total Documents</p>
+              <p className="text-xs text-gray-500">📦 Stored in Dropbox</p>
             </div>
 
             <div className="card text-center">
@@ -293,12 +308,29 @@ const Dashboard = () => {
             </div>
           </div>
 
+          {/* Dropbox Integration Info */}
+          <div className="card mb-6">
+            <h3 className="font-semibold mb-4">📦 Dropbox Integration</h3>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="text-2xl">☁️</div>
+                <div>
+                  <h4 className="font-semibold text-blue-800">Cloud Storage Active</h4>
+                  <p className="text-sm text-blue-700">All your files are securely stored in Dropbox cloud storage</p>
+                </div>
+              </div>
+              <div className="text-xs text-blue-600 mt-2">
+                ✅ Automatic backup • ✅ Global access • ✅ Secure encryption • ✅ Version control
+              </div>
+            </div>
+          </div>
+
           {/* Quick Actions */}
           <div className="card mb-6">
             <h3 className="font-semibold mb-4">🚀 Quick Actions</h3>
             <div className="flex gap-4 flex-wrap">
               <Link to="/upload" className="btn btn-primary">
-                📤 Upload Document
+                📤 Upload to Dropbox
               </Link>
               <Link to="/documents" className="btn btn-secondary">
                 📄 View All Documents
@@ -348,7 +380,7 @@ const Dashboard = () => {
               <div className="text-4xl mb-4">🌍</div>
               <p className="text-gray-600 mb-4">No public files available yet.</p>
               <Link to="/upload" className="btn btn-primary">
-                📤 Upload a public document
+                📤 Upload a public document to Dropbox
               </Link>
             </div>
           ) : (
@@ -370,7 +402,7 @@ const Dashboard = () => {
               <div className="text-4xl mb-4">🔒</div>
               <p className="text-gray-600 mb-4">You don't have any private files yet.</p>
               <Link to="/upload" className="btn btn-primary">
-                📤 Upload a private document
+                📤 Upload a private document to Dropbox
               </Link>
             </div>
           ) : (
@@ -392,7 +424,7 @@ const Dashboard = () => {
               <div className="text-4xl mb-4">🔐</div>
               <p className="text-gray-600 mb-4">No protected files available.</p>
               <Link to="/upload" className="btn btn-primary">
-                📤 Upload a protected document
+                📤 Upload a protected document to Dropbox
               </Link>
             </div>
           ) : (

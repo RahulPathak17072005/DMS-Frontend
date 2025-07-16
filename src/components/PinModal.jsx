@@ -18,9 +18,10 @@ const PinModal = ({ isOpen, onClose, onVerify, documentName }) => {
     try {
       await onVerify(pin)
       setPin("")
-      onClose()
+      // Don't close modal here - let parent handle it after successful verification
     } catch (error) {
-      toast.error("Invalid PIN. Please try again.")
+      // Error is already handled in parent component
+      console.error("PIN verification error:", error)
     } finally {
       setLoading(false)
     }
@@ -47,6 +48,7 @@ const PinModal = ({ isOpen, onClose, onVerify, documentName }) => {
             <p className="text-gray-600 mb-2">This document is protected and requires a PIN to access.</p>
             <div className="p-3 bg-gray-50 rounded-lg border">
               <p className="font-semibold text-gray-800">{documentName}</p>
+              <p className="text-xs text-gray-500 mt-1">📦 Stored securely in Dropbox</p>
             </div>
           </div>
 
