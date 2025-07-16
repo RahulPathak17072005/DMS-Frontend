@@ -123,10 +123,14 @@ const AdminPanel = () => {
 
   const handleDownload = async (documentId, originalName) => {
     try {
+      console.log("Admin download starting for:", originalName)
+
       const response = await apiClient.get(`/api/documents/download/${documentId}`, {
         responseType: "blob",
         timeout: 60000, // 60 seconds for download
       })
+
+      console.log("Download response received, size:", response.data.size)
 
       const url = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")
@@ -137,10 +141,24 @@ const AdminPanel = () => {
       link.remove()
       window.URL.revokeObjectURL(url)
 
-      toast.success("Download started successfully")
+      toast.success("Download completed successfully")
     } catch (error) {
-      toast.error("Download failed: " + (error.response?.data?.message || error.message))
-      console.error("Download error:", error)
+      console.error("Admin download error:", error)
+
+      if (error.response?.status === 404) {
+        toast.error("File not found: " + (error.response?.data?.message || "The file may have been deleted"))
+      } else if (error.response?.status === 500) {
+        const message = error.response?.data?.message || "Server error during download"
+        const details = error.response?.data?.details
+        toast.error(message)
+        if (details) {
+          console.error("Download error details:", details)
+        }
+      } else if (error.code === "ECONNABORTED") {
+        toast.error("Download timeout. The file may be too large or connection is slow.")
+      } else {
+        toast.error("Download failed: " + (error.response?.data?.message || error.message))
+      }
     }
   }
 

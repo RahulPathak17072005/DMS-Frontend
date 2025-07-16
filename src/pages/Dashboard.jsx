@@ -74,6 +74,8 @@ const Dashboard = () => {
 
   const handleDownload = async (doc, pin = null) => {
     try {
+      console.log("Starting download for:", doc.originalName)
+
       let url = `/api/documents/download/${doc._id}`
       if (pin) {
         url += `?pin=${encodeURIComponent(pin)}`
@@ -84,6 +86,8 @@ const Dashboard = () => {
         timeout: 60000, // 60 seconds for download
       })
 
+      console.log("Download response received, size:", response.data.size)
+
       const downloadUrl = window.URL.createObjectURL(new Blob([response.data]))
       const link = document.createElement("a")
       link.href = downloadUrl
@@ -93,7 +97,7 @@ const Dashboard = () => {
       link.remove()
       window.URL.revokeObjectURL(downloadUrl)
 
-      toast.success("Download started successfully from Dropbox")
+      toast.success("Download completed successfully from Dropbox")
       setPinModal({ isOpen: false, documentId: null, documentName: "", action: null })
       setSelectedDocument(null)
 
@@ -101,6 +105,7 @@ const Dashboard = () => {
       fetchDashboardData()
     } catch (error) {
       console.error("Download error:", error)
+
       if (error.response?.status === 401 && error.response?.data?.requiresPin) {
         setPinModal({
           isOpen: true,
@@ -111,6 +116,17 @@ const Dashboard = () => {
         setSelectedDocument(doc)
       } else if (error.response?.status === 403) {
         toast.error("Access denied: This is a private document")
+      } else if (error.response?.status === 404) {
+        toast.error("File not found: " + (error.response?.data?.message || "The file may have been deleted"))
+      } else if (error.response?.status === 500) {
+        const message = error.response?.data?.message || "Server error during download"
+        const details = error.response?.data?.details
+        toast.error(message)
+        if (details) {
+          console.error("Download error details:", details)
+        }
+      } else if (error.code === "ECONNABORTED") {
+        toast.error("Download timeout. The file may be too large or connection is slow.")
       } else {
         toast.error("Download failed: " + (error.response?.data?.message || error.message))
       }
