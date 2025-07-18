@@ -737,6 +737,38 @@ textarea.form-control {
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Preview Modal - Special styling for file previews */
+.preview-modal {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+}
+
+.preview-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.preview-content {
+  text-align: center;
+}
+
+.image-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.pdf-preview {
+  margin: 1rem 0;
+}
+
+.text-preview {
+  margin: 1rem 0;
+  text-align: left;
+}
+
 .modal-header {
   padding: 1.5rem 1.5rem 1rem;
   border-bottom: 2px solid var(--gray-200);
@@ -757,6 +789,11 @@ textarea.form-control {
 @media (max-width: 640px) {
   .modal-footer {
     flex-direction: column;
+  }
+
+  .preview-modal {
+    max-width: 95vw;
+    margin: 0.5rem;
   }
 }
 

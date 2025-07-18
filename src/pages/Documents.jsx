@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import PinModal from "../components/PinModal"
+import FilePreviewModal from "../components/FilePreviewModal"
 import apiClient from "../config/api"
 import toast from "react-hot-toast"
 
@@ -26,6 +27,10 @@ const Documents = () => {
     documentId: null,
     documentName: "",
     action: null,
+  })
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    document: null,
   })
   const [selectedDocument, setSelectedDocument] = useState(null)
 
@@ -103,6 +108,13 @@ const Documents = () => {
       return true
     }
     return false
+  }
+
+  const handlePreview = (doc) => {
+    setPreviewModal({
+      isOpen: true,
+      document: doc,
+    })
   }
 
   const handleDownload = async (doc, pin = null) => {
@@ -218,6 +230,11 @@ const Documents = () => {
     return user?.role === "admin" || doc.uploadedBy._id === user?.id
   }
 
+  const canPreviewDocument = (doc) => {
+    // Same access rules as download, but we'll show preview button for all accessible files
+    return canAccessDocument(doc) || doc.accessLevel === "protected"
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -299,6 +316,7 @@ const Documents = () => {
             const categoryBadge = getCategoryBadge(doc.category)
             const accessBadge = getAccessLevelBadge(doc.accessLevel)
             const hasAccess = canAccessDocument(doc)
+            const canPreview = canPreviewDocument(doc)
 
             return (
               <div key={doc._id} className="document-card">
@@ -347,6 +365,12 @@ const Documents = () => {
                 )}
 
                 <div className="document-actions">
+                  {canPreview && (
+                    <button onClick={() => handlePreview(doc)} className="btn btn-secondary btn-sm">
+                      👁️ Preview
+                    </button>
+                  )}
+
                   {canAccessDocument(doc) && (
                     <button onClick={() => handleDownload(doc)} className="btn btn-primary btn-sm">
                       📥 Download
@@ -412,6 +436,14 @@ const Documents = () => {
         onClose={() => setPinModal({ isOpen: false, documentId: null, documentName: "", action: null })}
         onVerify={handlePinVerify}
         documentName={pinModal.documentName}
+      />
+
+      {/* File Preview Modal */}
+      <FilePreviewModal
+        isOpen={previewModal.isOpen}
+        onClose={() => setPreviewModal({ isOpen: false, document: null })}
+        document={previewModal.document}
+        onDownload={handleDownload}
       />
     </div>
   )
