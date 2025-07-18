@@ -10,6 +10,7 @@ import Documents from "./pages/Documents"
 import Upload from "./pages/Upload"
 import AdminPanel from "./pages/AdminPanel"
 import ProtectedRoute from "./components/ProtectedRoute"
+import BackgroundParticles from "./components/BackgroundParticles" // New import
 
 function App() {
   const { user, loading } = useAuth()
@@ -24,6 +25,7 @@ function App() {
 
   return (
     <div className="App">
+      <BackgroundParticles /> {/* Add this line */}
       {user && <Navbar />}
       <div className="container">
         <Routes>
